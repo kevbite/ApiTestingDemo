@@ -1,0 +1,6 @@
+@ApiTestingDemo.InsuranceApi_HostAddress = http://localhost:5244
+
+POST {{ApiTestingDemo.InsuranceApi_HostAddress}}/quotes/
+Accept: application/json
+
+###
