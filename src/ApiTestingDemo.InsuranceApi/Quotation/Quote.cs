@@ -37,7 +37,7 @@ public record Quote
                 Applicant.Nationality),
             creditScore
         );
-        
+
         CreditScore = creditScore;
         ScoreCardResult = scoreCardResult;
     }

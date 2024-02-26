@@ -9,9 +9,11 @@ public class BureauHarness(IHarness harness)
     private BureauData GoodBureauData => new BureauData(Guid.NewGuid(), 700);
     private BureauData BadBureauData => new BureauData(Guid.NewGuid(), 100);
 
-    public void AddGoodBureauData(ResourceRepresentationApplicant applicant)
+    public BureauData AddGoodBureauData(ResourceRepresentationApplicant applicant)
     {
         AddBureauData(applicant.FirstName, applicant.LastName, applicant.DateOfBirth, GoodBureauData);
+
+        return GoodBureauData;
     }
     
     public void AddBadBureauData(ResourceRepresentationApplicant applicant)

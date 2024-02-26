@@ -1,11 +1,19 @@
-﻿namespace ApiTestingDemo.FunctionalTests;
+﻿using ApiTestingDemo.InsuranceApi.Quotation;
+using Microsoft.Extensions.DependencyInjection;
+using MongoDB.Bson;
+using MongoDB.Driver;
 
-public class MongoDbHarness
+namespace ApiTestingDemo.FunctionalTests;
+
+public class MongoDbHarness(IHarness harness)
 {
-    private readonly IHarness _harness;
-
-    public MongoDbHarness(IHarness harness)
+    public BsonDocument GetQuote(Guid id)
     {
-        _harness = harness;
+        using var scope = harness.Services.CreateScope();
+        var db = scope.ServiceProvider.GetRequiredService<IMongoDatabase>();
+        var collection = db.GetCollection<BsonDocument>("quotes");
+        
+        return collection.Find(Builders<BsonDocument>.Filter.Eq("_id", new BsonBinaryData(id, GuidRepresentation.Standard)))
+            .FirstOrDefault();
     }
 }

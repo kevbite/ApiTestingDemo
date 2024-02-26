@@ -1,4 +1,5 @@
 using System.Net;
+using ApiTestingDemo.InsuranceApi;
 using FluentAssertions;
 
 namespace ApiTestingDemo.FunctionalTests.Quotation;
@@ -41,14 +42,25 @@ public class PostQuoteTests : IAsyncDisposable
     public async Task ShouldReturn200SuccessWithResponseBodyOfDeclinedForNoMatchingBureauData()
     {
         var quote = QuoteResourceRepresentations.SuccessfulQuote;
-        
+
         var (statusCode, body) = await _harness.PostQuote(JsonNodeQuoteBuilder.Build(quote));
 
         statusCode.Should().Be(HttpStatusCode.OK);
         QuoteJsonDocumentAssertions.Assert(body!, quote, "Declined");
     }
+
+    [Fact]
+    public async Task ShouldStoreQuoteDocumentForNoMatchingBureauData()
+    {
+        var quote = QuoteResourceRepresentations.SuccessfulQuote;
+
+        var (_, content) = await _harness.PostQuote(JsonNodeQuoteBuilder.Build(quote));
+
+        var id = content!.RootElement.GetProperty("id").GetGuid();
+        var document = _harness.Mongo.GetQuote(id);
+        BsonDocumentQuoteAssertions.Assert(document, id, quote, 0);
+    }
     
-        
     [Fact]
     public async Task ShouldReturn200SuccessWithResponseBodyOfDeclinedForBadBureauData()
     {
@@ -72,7 +84,7 @@ public class PostQuoteTests : IAsyncDisposable
         statusCode.Should().Be(HttpStatusCode.OK);
         QuoteJsonDocumentAssertions.Assert(body!, quote, "Referred");
     }
-    
+
     [Fact]
     public async Task ShouldReturn200SuccessWithResponseBodyOfReferredForDeclinedQuote()
     {
@@ -84,7 +96,7 @@ public class PostQuoteTests : IAsyncDisposable
         statusCode.Should().Be(HttpStatusCode.OK);
         QuoteJsonDocumentAssertions.Assert(body!, quote, "Declined");
     }
-    
+
     [Fact]
     public async Task ShouldReturn200SuccessWithResponseBodyOfApprovedForSuccessfulQuote()
     {
@@ -97,6 +109,19 @@ public class PostQuoteTests : IAsyncDisposable
         QuoteJsonDocumentAssertions.Assert(body!, quote, "Approved");
     }
 
+    [Fact]
+    public async Task ShouldStoreQuoteDocumentForSuccessfulQuote()
+    {
+        var quote = QuoteResourceRepresentations.SuccessfulQuote;
+        var (_, creditScore) = _harness.Bureau.AddGoodBureauData(quote.Applicant);
+
+        var (_, content) = await _harness.PostQuote(JsonNodeQuoteBuilder.Build(quote));
+      
+        var id = content!.RootElement.GetProperty("id").GetGuid();
+        var document = _harness.Mongo.GetQuote(id);
+        BsonDocumentQuoteAssertions.Assert(document, id, quote, creditScore, ScoreCardResult.Approved);
+    }
+    
     public async ValueTask DisposeAsync()
     {
         await _harness.DisposeAsync();

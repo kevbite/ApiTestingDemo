@@ -1,7 +1,9 @@
 using System.Text.Json.Serialization;
+using ApiTestingDemo.InsuranceApi;
 using ApiTestingDemo.InsuranceApi.Bureau;
 using ApiTestingDemo.InsuranceApi.Quotation;
-
+using MongoDB.Driver;
+BsonSetup.Setup();
 var builder = WebApplication.CreateBuilder(args);
 
 // Add services to the container.
@@ -12,6 +14,13 @@ builder.Services.AddSwaggerGen(o
 builder.Services.ConfigureHttpJsonOptions(options =>
     options.SerializerOptions.Converters.Add(new JsonStringEnumConverter()));
 builder.Services.AddSingleton<TimeProvider>(TimeProvider.System);
+builder.Services.AddSingleton(new MongoClient(builder.Configuration["DefaultConnection"]));
+builder.Services.AddSingleton(provider => 
+    provider.GetRequiredService<MongoClient>()
+        .GetDatabase("insurance"));
+builder.Services.AddTransient(provider => 
+    provider.GetRequiredService<IMongoDatabase>()
+        .GetCollection<Quote>("quotes"));
 
 builder.Services.AddBureau();
 
